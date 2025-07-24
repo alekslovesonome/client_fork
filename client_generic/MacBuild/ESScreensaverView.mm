@@ -264,9 +264,11 @@ static void signnal_handler(int signal)
     if (@available(macOS 14.0, *)) {
         g_Log->Info("Deinit");
         ESScreensaver_Deinit();
-        g_Log->Info("Log shutdown, will exit");
+        g_Log->Info("Log shutdown, will exit in 2 seconds");
         g_Log->Shutdown();
-        exit(0);
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+            exit(0);
+        });
     }
 #endif
 }
