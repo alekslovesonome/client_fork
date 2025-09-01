@@ -518,11 +518,15 @@ std::optional<PlaylistManager::NextDreamDecision> PlaylistManager::preflightNext
     // No keyframe match - find next unplayed dream
     if (hasUnplayedDreams()) {
         g_Log->Info("Preflight : has unplayed dreams");
+        
+        // Track if we found any unplayed dreams that were skipped due to not being cached
+        bool foundUnplayedButUncached = false;
 
         for (size_t i = 0; i < m_playlist.size(); i++) {
             if (i != m_currentPosition && !isDreamPlayed(m_playlist[i].uuid)) {
                 // If canStream is false, only consider cached dreams
                 if (!canStream && !m_cacheManager.hasDiskCachedItem(m_playlist[i].uuid)) {
+                    foundUnplayedButUncached = true;
                     continue;
                 }
                 
@@ -538,6 +542,13 @@ std::optional<PlaylistManager::NextDreamDecision> PlaylistManager::preflightNext
                 g_Log->Info("Preflight : returning first unplayed : %zu", i);
                 return decision;
             }
+        }
+        
+        // If we found unplayed dreams but none were cached, we need to reset
+        if (foundUnplayedButUncached && !canStream) {
+            g_Log->Info("Preflight : has unplayed dreams but none are cached, resetting play history");
+            // Cast away const to reset - this is a special case where we need to modify state
+            const_cast<PlaylistManager*>(this)->resetPlayHistory();
         }
     }
 
