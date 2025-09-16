@@ -578,6 +578,8 @@
 		F0E9CEAA2C136B0500C4D694 /* vote-up.png in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2160FE1A0F30F82800B2C27A /* vote-up.png */; };
 		F0E9CEAB2C136B0500C4D694 /* logo.png in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2160FE240F30F82800B2C27A /* logo.png */; };
 		F0E9CEAC2C136B0500C4D694 /* Credits.html in CopyFiles */ = {isa = PBXBuildFile; fileRef = 21006FBD1017BC2C004A6511 /* Credits.html */; };
+		F0F4CE4C2E785E6F00C1F6AA /* ScreensaverHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0F4CE4B2E785E6F00C1F6AA /* ScreensaverHelper.swift */; };
+		F0F4CE4D2E785E6F00C1F6AA /* ScreensaverHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0F4CE4B2E785E6F00C1F6AA /* ScreensaverHelper.swift */; };
 		F0F6D4262BCD504500222647 /* osd-like.png in Resources */ = {isa = PBXBuildFile; fileRef = F0F6D4242BCD504500222647 /* osd-like.png */; };
 		F0F6D4272BCD504500222647 /* osd-like.png in Resources */ = {isa = PBXBuildFile; fileRef = F0F6D4242BCD504500222647 /* osd-like.png */; };
 		F0F6D4282BCD504500222647 /* osd-dislike.png in Resources */ = {isa = PBXBuildFile; fileRef = F0F6D4252BCD504500222647 /* osd-dislike.png */; };
@@ -991,6 +993,8 @@
 		F0CCD2532B9A59320070314F /* infinidream AppRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "infinidream AppRelease.entitlements"; sourceTree = "<group>"; };
 		F0E9CEB12C136B0500C4D694 /* infinidream stage.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "infinidream stage.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		F0E9CEB22C136B0600C4D694 /* infinidream App copy-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "infinidream App copy-Info.plist"; sourceTree = "<group>"; };
+		F0F4CE4B2E785E6F00C1F6AA /* ScreensaverHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreensaverHelper.swift; sourceTree = "<group>"; };
+		F0F4CE4E2E785E7100C1F6AA /* infinidream App Prod-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "infinidream App Prod-Bridging-Header.h"; sourceTree = "<group>"; };
 		F0F6D4242BCD504500222647 /* osd-like.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "osd-like.png"; sourceTree = "<group>"; };
 		F0F6D4252BCD504500222647 /* osd-dislike.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "osd-dislike.png"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -1386,6 +1390,8 @@
 				F02C15182E0194CA00BFFFF4 /* First startup */,
 				F0917E072E32764C000DBED8 /* ESAppDelegate.h */,
 				F0917E082E32764C000DBED8 /* ESAppDelegate.mm */,
+				F0F4CE4B2E785E6F00C1F6AA /* ScreensaverHelper.swift */,
+				F0F4CE4E2E785E7100C1F6AA /* infinidream App Prod-Bridging-Header.h */,
 			);
 			name = Client;
 			sourceTree = "<group>";
@@ -2006,6 +2012,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2197D56719B07FCF00EFA1F2 /* proximus.c in Sources */,
+				F0F4CE4D2E785E6F00C1F6AA /* ScreensaverHelper.swift in Sources */,
 				461C9D7D2B28BA50000C44E9 /* JSONStorage.cpp in Sources */,
 				F02A5C3D2C453FEF00B57FBD /* DreamDownloader.cpp in Sources */,
 				2160FAB30F30F45100B2C27A /* Common.cpp in Sources */,
@@ -2203,6 +2210,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F0E9CE4A2C136B0500C4D694 /* proximus.c in Sources */,
+				F0F4CE4C2E785E6F00C1F6AA /* ScreensaverHelper.swift in Sources */,
 				F0E9CE4B2C136B0500C4D694 /* JSONStorage.cpp in Sources */,
 				F02A5C402C453FEF00B57FBD /* DreamDownloader.cpp in Sources */,
 				F0E9CE4C2C136B0500C4D694 /* Common.cpp in Sources */,
@@ -2527,6 +2535,7 @@
 				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
 				SDKROOT = macosx;
 				STRIP_INSTALLED_PRODUCT = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "infinidream App Prod-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				VALID_ARCHS = "arm64 arm64e i386 x86_64";
@@ -2583,6 +2592,7 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				STRIP_INSTALLED_PRODUCT = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "infinidream App Prod-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				VALID_ARCHS = "arm64 arm64e i386 x86_64";
 			};
