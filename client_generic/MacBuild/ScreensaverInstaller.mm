@@ -6,9 +6,14 @@
 //
 
 #import "ScreensaverInstaller.h"
-#ifndef SCREEN_SAVER
+
+// Bridging header is auto-generated based on product module name
+#ifdef STAGE
+#import "infinidream_stage-Swift.h"
+#else
 #import "infinidream-Swift.h"
 #endif
+
 #include "Log.h"
 
 @implementation ScreensaverInstaller
