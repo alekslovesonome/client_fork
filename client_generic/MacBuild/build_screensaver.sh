@@ -103,19 +103,25 @@ else
     echo "This may cause notarization to fail."
 fi
 
-# Copy screensaver to output directory
-echo -e "${YELLOW}Copying screensaver to output directory...${NC}"
+# Copy screensaver to project Resources directory
+echo -e "${YELLOW}Copying screensaver to project Resources directory...${NC}"
+PROJECT_SCREENSAVER="Resources/${SCREENSAVER_NAME}"
 OUTPUT_SAVER="${BUILD_DIR}/${BUILD_CONFIG}/${SCREENSAVER_NAME}"
-cp -R "${PRODUCTS_DIR}/${SCREENSAVER_NAME}" "${OUTPUT_SAVER}"
 
-if [ ! -d "${OUTPUT_SAVER}" ]; then
-    echo -e "${RED}Failed to copy screensaver to output directory${NC}"
+# Copy to both locations for backwards compatibility and project integration
+cp -R "${PRODUCTS_DIR}/${SCREENSAVER_NAME}" "${OUTPUT_SAVER}"
+cp -R "${PRODUCTS_DIR}/${SCREENSAVER_NAME}" "${PROJECT_SCREENSAVER}"
+
+if [ ! -d "${OUTPUT_SAVER}" ] || [ ! -d "${PROJECT_SCREENSAVER}" ]; then
+    echo -e "${RED}Failed to copy screensaver${NC}"
     exit 1
 fi
 
-# Create zip for notarization from the copied version
+echo -e "${GREEN}✓ Screensaver copied to project Resources${NC}"
+
+# Create zip for notarization from the project version
 echo -e "${YELLOW}Creating zip of screensaver for notarization...${NC}"
-ditto -c -k --keepParent "${OUTPUT_SAVER}" "${OUTPUT_ZIP}"
+ditto -c -k --keepParent "${PROJECT_SCREENSAVER}" "${OUTPUT_ZIP}"
 
 if [ ! -f "${OUTPUT_ZIP}" ]; then
     echo -e "${RED}Failed to create zip file${NC}"
@@ -123,7 +129,7 @@ if [ ! -f "${OUTPUT_ZIP}" ]; then
 fi
 
 # Get file sizes for verification
-SAVER_SIZE=$(du -sh "${OUTPUT_SAVER}" | cut -f1)
+SAVER_SIZE=$(du -sh "${PROJECT_SCREENSAVER}" | cut -f1)
 ZIP_SIZE=$(du -h "${OUTPUT_ZIP}" | cut -f1)
 
 # Summary
@@ -132,6 +138,7 @@ echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}Screensaver Build Complete! 🎉${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo "Build output: ${PRODUCTS_DIR}/${SCREENSAVER_NAME}"
+echo "Project resource: ${PROJECT_SCREENSAVER} (${SAVER_SIZE})"
 echo "Preserved at: ${OUTPUT_SAVER} (${SAVER_SIZE})"
 echo "Zip for notarization: ${OUTPUT_ZIP} (${ZIP_SIZE})"
 echo ""

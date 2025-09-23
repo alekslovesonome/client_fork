@@ -19,6 +19,7 @@ DERIVED_DATA="${BUILD_DIR}/DerivedData"
 PRODUCTS_DIR="${DERIVED_DATA}/Build/Products/${BUILD_CONFIG}"
 INPUT_ZIP="${BUILD_DIR}/${BUILD_CONFIG}/screensaver.zip"
 SCREENSAVER_NAME="infinidream.saver"
+PROJECT_SCREENSAVER="Resources/${SCREENSAVER_NAME}"
 KEYCHAIN_PROFILE="infinidream-notarization"
 
 # Parse command line arguments
@@ -40,6 +41,7 @@ echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}infinidream Screensaver Notarization (Step 2)${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo -e "Input ZIP: ${INPUT_ZIP}"
+echo -e "Project Screensaver: ${PROJECT_SCREENSAVER}"
 echo -e "Keychain Profile: ${KEYCHAIN_PROFILE}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
@@ -51,9 +53,9 @@ if [ ! -f "${INPUT_ZIP}" ]; then
     exit 1
 fi
 
-# Check if screensaver exists in build directory
-if [ ! -d "${PRODUCTS_DIR}/${SCREENSAVER_NAME}" ]; then
-    echo -e "${RED}Error: Screensaver not found at ${PRODUCTS_DIR}/${SCREENSAVER_NAME}${NC}"
+# Check if screensaver exists in project Resources
+if [ ! -d "${PROJECT_SCREENSAVER}" ]; then
+    echo -e "${RED}Error: Screensaver not found at ${PROJECT_SCREENSAVER}${NC}"
     echo -e "${RED}Please run ./build_screensaver.sh first${NC}"
     exit 1
 fi
@@ -115,9 +117,9 @@ fi
 
 echo -e "${GREEN}✓ Screensaver notarization successful${NC}"
 
-# Staple the notarization ticket
+# Staple the notarization ticket to project screensaver
 echo -e "${YELLOW}Stapling notarization ticket to screensaver...${NC}"
-if ! xcrun stapler staple "${PRODUCTS_DIR}/${SCREENSAVER_NAME}"; then
+if ! xcrun stapler staple "${PROJECT_SCREENSAVER}"; then
     echo -e "${RED}✗ Failed to staple notarization ticket${NC}"
     echo "The screensaver was notarized but stapling failed."
     echo "You may continue, but the screensaver will need internet access to verify."
@@ -128,7 +130,7 @@ echo -e "${GREEN}✓ Notarization ticket stapled successfully${NC}"
 
 # Verify stapling
 echo -e "${YELLOW}Verifying notarization...${NC}"
-if spctl --assess --type install -vvv "${PRODUCTS_DIR}/${SCREENSAVER_NAME}" 2>&1 | grep -q "accepted"; then
+if spctl --assess --type install -vvv "${PROJECT_SCREENSAVER}" 2>&1 | grep -q "accepted"; then
     echo -e "${GREEN}✓ Notarization verification passed${NC}"
 else
     echo -e "${YELLOW}⚠ Could not verify notarization (this may be normal for screensavers)${NC}"
@@ -139,7 +141,7 @@ echo ""
 echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}Screensaver Notarization Complete! 🎉${NC}"
 echo -e "${GREEN}========================================${NC}"
-echo "Notarized screensaver: ${PRODUCTS_DIR}/${SCREENSAVER_NAME}"
+echo "Notarized screensaver: ${PROJECT_SCREENSAVER}"
 echo ""
 echo "Next steps:"
 echo "Run ./build_app_with_screensaver.sh to build the app with the notarized screensaver"

@@ -52,15 +52,15 @@ echo -e "Notarization: $([ "$SKIP_NOTARIZATION" = false ] && echo "Enabled" || e
 echo -e "${BLUE}========================================${NC}"
 echo ""
 
-# Check if screensaver exists from previous build steps
-SCREENSAVER_SOURCE="${BUILD_DIR}/${BUILD_CONFIG}/${SCREENSAVER_NAME}"
-if [ ! -d "${SCREENSAVER_SOURCE}" ]; then
-    echo -e "${RED}Error: Screensaver not found at ${SCREENSAVER_SOURCE}${NC}"
+# Check if notarized screensaver exists in project Resources
+PROJECT_SCREENSAVER="Resources/${SCREENSAVER_NAME}"
+if [ ! -d "${PROJECT_SCREENSAVER}" ]; then
+    echo -e "${RED}Error: Notarized screensaver not found at ${PROJECT_SCREENSAVER}${NC}"
     echo -e "${RED}Please run ./build_screensaver.sh and ./notarize_screensaver.sh first${NC}"
     exit 1
 fi
 
-echo -e "${GREEN}✓ Found screensaver at ${SCREENSAVER_SOURCE}${NC}"
+echo -e "${GREEN}✓ Found notarized screensaver in project Resources${NC}"
 
 # Archive app (like Xcode Archive)
 echo -e "${YELLOW}Archiving app (${APP_SCHEME})...${NC}"
@@ -90,31 +90,6 @@ if [ ! -d "${APP_ARCHIVE_PATH}" ]; then
 fi
 
 echo -e "${GREEN}✓ App archive created successfully${NC}"
-
-# Embed screensaver into archived app bundle
-echo -e "${YELLOW}Embedding screensaver into archived app bundle...${NC}"
-# Find the actual app location in the archive (it might be in a user-specific path)
-ARCHIVED_APP=$(find "${APP_ARCHIVE_PATH}/Products" -name "${APP_NAME}" -type d | head -1)
-if [ -z "$ARCHIVED_APP" ]; then
-    echo -e "${RED}Error: Could not find archived app in ${APP_ARCHIVE_PATH}/Products${NC}"
-    echo "Available contents:"
-    ls -la "${APP_ARCHIVE_PATH}/Products" 2>/dev/null || echo "Products directory not found"
-    exit 1
-fi
-
-echo -e "${GREEN}Found archived app at: ${ARCHIVED_APP}${NC}"
-APP_RESOURCES="${ARCHIVED_APP}/Contents/Resources"
-
-mkdir -p "$APP_RESOURCES"
-cp -R "${SCREENSAVER_SOURCE}" "$APP_RESOURCES/${SCREENSAVER_NAME}"
-
-# Verify embedded screensaver
-if [ -d "${APP_RESOURCES}/${SCREENSAVER_NAME}" ]; then
-    echo -e "${GREEN}✓ Screensaver successfully embedded in archive${NC}"
-else
-    echo -e "${RED}Error: Failed to embed screensaver in archived app bundle${NC}"
-    exit 1
-fi
 
 # Create export options plist for app distribution
 APP_EXPORT_OPTIONS="${BUILD_DIR}/${BUILD_CONFIG}/AppExportOptions.plist"
@@ -155,13 +130,13 @@ xcodebuild -exportArchive \
 EXPORTED_APP=$(find "$APP_EXPORT_PATH" -name "*.app" -type d | head -1)
 if [ ! -d "$EXPORTED_APP" ]; then
     echo -e "${RED}Failed to export app${NC}"
+    echo "Export path contents:"
+    ls -la "$APP_EXPORT_PATH" 2>/dev/null || echo "Export path not found"
     exit 1
 fi
 
 echo -e "${GREEN}✓ App exported successfully${NC}"
-
-# Copy exported app to expected location for notarization
-cp -R "$EXPORTED_APP" "${PRODUCTS_DIR}/${APP_NAME}"
+echo "Exported app: $EXPORTED_APP"
 
 # Notarize app (unless skipped)
 if [ "$SKIP_NOTARIZATION" = false ]; then
@@ -170,7 +145,7 @@ if [ "$SKIP_NOTARIZATION" = false ]; then
     # Create a zip for app notarization
     echo -e "${YELLOW}Creating zip of app for notarization...${NC}"
     APP_ZIP="${BUILD_DIR}/${BUILD_CONFIG}/app.zip"
-    ditto -c -k --keepParent "${PRODUCTS_DIR}/${APP_NAME}" "${APP_ZIP}"
+    ditto -c -k --keepParent "$EXPORTED_APP" "$APP_ZIP"
 
     # Submit app for notarization
     echo -e "${YELLOW}Submitting app to Apple for notarization...${NC}"
@@ -234,7 +209,7 @@ if [ "$SKIP_NOTARIZATION" = false ]; then
 
     # Staple the notarization ticket to app
     echo -e "${YELLOW}Stapling notarization ticket to app...${NC}"
-    if ! xcrun stapler staple "${PRODUCTS_DIR}/${APP_NAME}"; then
+    if ! xcrun stapler staple "$EXPORTED_APP"; then
         echo -e "${RED}✗ Failed to staple notarization ticket to app${NC}"
         echo "The app was notarized but stapling failed."
         echo "Users will need internet access to verify the app on first launch."
@@ -242,36 +217,41 @@ if [ "$SKIP_NOTARIZATION" = false ]; then
         echo -e "${GREEN}✓ Notarization ticket stapled successfully${NC}"
     fi
 
-    # Clean up app zip
-    rm "${APP_ZIP}"
-
     # Verify notarization
     echo -e "${YELLOW}Verifying app notarization...${NC}"
-    if spctl --assess --type execute -vvv "${PRODUCTS_DIR}/${APP_NAME}" 2>&1 | grep -q "accepted"; then
+    if spctl --assess --type execute -vvv "$EXPORTED_APP" 2>&1 | grep -q "accepted"; then
         echo -e "${GREEN}✓ App notarization verification passed${NC}"
     else
         echo -e "${YELLOW}⚠ Could not fully verify notarization (app may still be valid)${NC}"
     fi
+
+    # Clean up app zip
+    rm "${APP_ZIP}"
 fi
 
 # Create distribution ZIP if everything succeeded
 FINAL_ZIP="${BUILD_DIR}/${BUILD_CONFIG}/infinidream-$(date +%Y%m%d).zip"
 echo -e "${YELLOW}Creating final distribution package...${NC}"
-ditto -c -k --keepParent "${PRODUCTS_DIR}/${APP_NAME}" "${FINAL_ZIP}"
+ditto -c -k --keepParent "$EXPORTED_APP" "$FINAL_ZIP"
+
+# Get file sizes
+APP_SIZE=$(du -sh "$EXPORTED_APP" | cut -f1)
+ZIP_SIZE=$(du -h "$FINAL_ZIP" | cut -f1)
 
 # Summary
 echo ""
 echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}Build Complete! 🎉${NC}"
 echo -e "${GREEN}========================================${NC}"
-echo "Application: ${PRODUCTS_DIR}/${APP_NAME}"
-echo "  └── Embedded: ${APP_RESOURCES}/${SCREENSAVER_NAME}"
+echo "Archive: ${APP_ARCHIVE_PATH}"
+echo "Exported app: ${EXPORTED_APP} (${APP_SIZE})"
+echo "Project screensaver: ${PROJECT_SCREENSAVER}"
 if [ "$SKIP_NOTARIZATION" = false ]; then
     echo "Notarization: ✓ Complete"
 fi
 echo ""
-echo "Distribution package: ${FINAL_ZIP}"
+echo "Distribution package: ${FINAL_ZIP} (${ZIP_SIZE})"
 echo ""
 echo "To test the app, run:"
-echo "  open '${PRODUCTS_DIR}/${APP_NAME}'"
+echo "  open '${EXPORTED_APP}'"
 echo ""
