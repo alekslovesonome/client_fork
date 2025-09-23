@@ -52,70 +52,116 @@ echo -e "Notarization: $([ "$SKIP_NOTARIZATION" = false ] && echo "Enabled" || e
 echo -e "${BLUE}========================================${NC}"
 echo ""
 
-# Check if notarized screensaver exists
-if [ ! -d "${PRODUCTS_DIR}/${SCREENSAVER_NAME}" ]; then
-    echo -e "${RED}Error: Notarized screensaver not found at ${PRODUCTS_DIR}/${SCREENSAVER_NAME}${NC}"
+# Check if screensaver exists from previous build steps
+SCREENSAVER_SOURCE="${BUILD_DIR}/${BUILD_CONFIG}/${SCREENSAVER_NAME}"
+if [ ! -d "${SCREENSAVER_SOURCE}" ]; then
+    echo -e "${RED}Error: Screensaver not found at ${SCREENSAVER_SOURCE}${NC}"
     echo -e "${RED}Please run ./build_screensaver.sh and ./notarize_screensaver.sh first${NC}"
     exit 1
 fi
 
-echo -e "${GREEN}✓ Found notarized screensaver${NC}"
+echo -e "${GREEN}✓ Found screensaver at ${SCREENSAVER_SOURCE}${NC}"
 
-# Save the screensaver to a temporary location before cleaning
-TEMP_SAVER_DIR="${BUILD_DIR}/temp_saver"
-mkdir -p "$TEMP_SAVER_DIR"
-echo -e "${YELLOW}Preserving notarized screensaver...${NC}"
-cp -R "${PRODUCTS_DIR}/${SCREENSAVER_NAME}" "${TEMP_SAVER_DIR}/${SCREENSAVER_NAME}"
+# Archive app (like Xcode Archive)
+echo -e "${YELLOW}Archiving app (${APP_SCHEME})...${NC}"
+APP_ARCHIVE_PATH="${BUILD_DIR}/${BUILD_CONFIG}/${APP_NAME}.xcarchive"
 
-# Build app
-echo -e "${YELLOW}Building app (${APP_SCHEME})...${NC}"
-
-xcodebuild -project "$PROJECT" \
+xcodebuild archive \
+           -project "$PROJECT" \
            -scheme "$APP_SCHEME" \
            -configuration "$BUILD_CONFIG" \
            -derivedDataPath "$DERIVED_DATA" \
-           OTHER_CODE_SIGN_FLAGS="--timestamp" \
-           clean build \
+           -archivePath "$APP_ARCHIVE_PATH" \
            | xcpretty --color || {
     # Fallback if xcpretty is not installed
-    xcodebuild -project "$PROJECT" \
+    xcodebuild archive \
+               -project "$PROJECT" \
                -scheme "$APP_SCHEME" \
                -configuration "$BUILD_CONFIG" \
                -derivedDataPath "$DERIVED_DATA" \
-               OTHER_CODE_SIGN_FLAGS="--timestamp" \
-               clean build
+               -archivePath "$APP_ARCHIVE_PATH"
 }
 
-# Verify app build
-if [ ! -d "${PRODUCTS_DIR}/${APP_NAME}" ]; then
-    echo -e "${RED}Failed to build ${APP_NAME}${NC}"
-    rm -rf "$TEMP_SAVER_DIR"
+# Verify archive was created
+if [ ! -d "${APP_ARCHIVE_PATH}" ]; then
+    echo -e "${RED}Failed to create app archive${NC}"
+    echo -e "${RED}Expected at: ${APP_ARCHIVE_PATH}${NC}"
     exit 1
 fi
 
-echo -e "${GREEN}✓ ${APP_NAME} built successfully${NC}"
+echo -e "${GREEN}✓ App archive created successfully${NC}"
 
-# Embed notarized screensaver into app bundle
-echo -e "${YELLOW}Embedding notarized screensaver into app bundle...${NC}"
-APP_RESOURCES="${PRODUCTS_DIR}/${APP_NAME}/Contents/Resources"
+# Embed screensaver into archived app bundle
+echo -e "${YELLOW}Embedding screensaver into archived app bundle...${NC}"
+# Find the actual app location in the archive (it might be in a user-specific path)
+ARCHIVED_APP=$(find "${APP_ARCHIVE_PATH}/Products" -name "${APP_NAME}" -type d | head -1)
+if [ -z "$ARCHIVED_APP" ]; then
+    echo -e "${RED}Error: Could not find archived app in ${APP_ARCHIVE_PATH}/Products${NC}"
+    echo "Available contents:"
+    ls -la "${APP_ARCHIVE_PATH}/Products" 2>/dev/null || echo "Products directory not found"
+    exit 1
+fi
+
+echo -e "${GREEN}Found archived app at: ${ARCHIVED_APP}${NC}"
+APP_RESOURCES="${ARCHIVED_APP}/Contents/Resources"
 
 mkdir -p "$APP_RESOURCES"
-cp -R "${TEMP_SAVER_DIR}/${SCREENSAVER_NAME}" "$APP_RESOURCES/${SCREENSAVER_NAME}"
-
-# Clean up temporary directory
-rm -rf "$TEMP_SAVER_DIR"
+cp -R "${SCREENSAVER_SOURCE}" "$APP_RESOURCES/${SCREENSAVER_NAME}"
 
 # Verify embedded screensaver
 if [ -d "${APP_RESOURCES}/${SCREENSAVER_NAME}" ]; then
-    echo -e "${GREEN}✓ Notarized screensaver successfully embedded${NC}"
+    echo -e "${GREEN}✓ Screensaver successfully embedded in archive${NC}"
 else
-    echo -e "${RED}Error: Failed to embed screensaver in app bundle${NC}"
+    echo -e "${RED}Error: Failed to embed screensaver in archived app bundle${NC}"
     exit 1
 fi
 
-# Re-sign the app after embedding the screensaver
-echo -e "${YELLOW}Re-signing app bundle with embedded screensaver...${NC}"
-codesign --force --deep --timestamp --sign - "${PRODUCTS_DIR}/${APP_NAME}"
+# Create export options plist for app distribution
+APP_EXPORT_OPTIONS="${BUILD_DIR}/${BUILD_CONFIG}/AppExportOptions.plist"
+cat > "$APP_EXPORT_OPTIONS" << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>method</key>
+    <string>developer-id</string>
+    <key>teamID</key>
+    <string>3L54M5L5KK</string>
+    <key>signingStyle</key>
+    <string>automatic</string>
+    <key>signingCertificate</key>
+    <string>Developer ID Application</string>
+</dict>
+</plist>
+EOF
+
+# Export archive for distribution (like Xcode "Distribute App")
+echo -e "${YELLOW}Exporting app for distribution...${NC}"
+APP_EXPORT_PATH="${BUILD_DIR}/${BUILD_CONFIG}/AppExport"
+
+xcodebuild -exportArchive \
+           -archivePath "$APP_ARCHIVE_PATH" \
+           -exportPath "$APP_EXPORT_PATH" \
+           -exportOptionsPlist "$APP_EXPORT_OPTIONS" \
+           | xcpretty --color || {
+    # Fallback if xcpretty is not installed
+    xcodebuild -exportArchive \
+               -archivePath "$APP_ARCHIVE_PATH" \
+               -exportPath "$APP_EXPORT_PATH" \
+               -exportOptionsPlist "$APP_EXPORT_OPTIONS"
+}
+
+# Find the exported app
+EXPORTED_APP=$(find "$APP_EXPORT_PATH" -name "*.app" -type d | head -1)
+if [ ! -d "$EXPORTED_APP" ]; then
+    echo -e "${RED}Failed to export app${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}✓ App exported successfully${NC}"
+
+# Copy exported app to expected location for notarization
+cp -R "$EXPORTED_APP" "${PRODUCTS_DIR}/${APP_NAME}"
 
 # Notarize app (unless skipped)
 if [ "$SKIP_NOTARIZATION" = false ]; then

@@ -81,14 +81,22 @@ echo -e "${GREEN}✓ ${SCREENSAVER_NAME} built successfully${NC}"
 echo -e "${YELLOW}Verifying code signature...${NC}"
 if codesign --verify --deep --strict "${PRODUCTS_DIR}/${SCREENSAVER_NAME}" 2>&1; then
     echo -e "${GREEN}✓ Code signature verified${NC}"
-    # Show signing details
-    SIGNER=$(codesign -dv "${PRODUCTS_DIR}/${SCREENSAVER_NAME}" 2>&1 | grep "Authority=Developer ID Application" | head -1)
-    if [ -n "$SIGNER" ]; then
-        echo -e "${GREEN}✓ Signed with Developer ID Application certificate${NC}"
+
+    # Check with spctl for more detailed info (non-fatal)
+    echo -e "${YELLOW}Checking signature details with spctl...${NC}"
+    SPCTL_OUTPUT=$(spctl -vvv --assess --type exec "${PRODUCTS_DIR}/${SCREENSAVER_NAME}" 2>&1 || true)
+
+    if [ -n "$SPCTL_OUTPUT" ]; then
+        echo "Signature status: $SPCTL_OUTPUT"
+
+        # Check if signed with Developer ID Application
+        if echo "$SPCTL_OUTPUT" | grep -q "Developer ID Application"; then
+            echo -e "${GREEN}✓ Signed with Developer ID Application certificate${NC}"
+        else
+            echo -e "${YELLOW}⚠ Warning: Not signed with Developer ID Application certificate${NC}"
+        fi
     else
-        echo -e "${YELLOW}⚠ Warning: Not signed with Developer ID Application certificate${NC}"
-        echo "Signature details:"
-        codesign -dv "${PRODUCTS_DIR}/${SCREENSAVER_NAME}" 2>&1 | grep "Authority" | head -3
+        echo -e "${YELLOW}⚠ Could not get detailed signature information${NC}"
     fi
 else
     echo -e "${RED}✗ Code signature verification failed${NC}"
