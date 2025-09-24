@@ -95,7 +95,7 @@ Use AirPlay to connect to a big screen.</string>
                     </textFieldCell>
                 </textField>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zvW-M4-Dty">
-                    <rect key="frame" x="219" y="89" width="231" height="19"/>
+                    <rect key="frame" x="211" y="82" width="247" height="27"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Install and enable screensaver" bezelStyle="regularSquare" imagePosition="left" alignment="center" controlSize="large" state="on" inset="2" id="gmw-Yc-6RL">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>

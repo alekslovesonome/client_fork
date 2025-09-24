@@ -33,6 +33,7 @@
 @property (strong) CodeStepViewController *codeStepVC;
 @property (strong) ThanksStepViewController *thanksStepVC;
 @property (strong) NSViewController *currentStepVC;
+@property (weak) IBOutlet NSButton *skipButton;
 
 @end
 
@@ -130,6 +131,7 @@
 }
 
 - (void)showThanksStep {
+    [_skipButton setHidden:true];
     [self switchToViewController:self.thanksStepVC];
 }
 
