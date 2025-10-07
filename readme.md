@@ -89,15 +89,29 @@ git tag X.Y.Z
 git push --tags
 ```
 
-archive the app and export with automatic notarization. zip the
-results with:
-
+Then build to set the version strings in the plists:
 ```
-ditto -c -k --keepParent infinidream.app infinidream-app-X.Y.Z.zip
+./build.sh
 ```
+Then build for release:
+```
+./build.sh -r -n
+```
+This creates build/Release/infinidream-$(DATE).zip
 
-The release image is now complete. Continue the release in the [public
-repository](https://github.com/e-dream-ai/public).
+The release image is now complete.
+
+* Make a release with the github button, write the notes, and upload
+  the image. If this is a pre-release, click that box to mark that,
+  and you are done. Otherwise, continue with linking as described
+  below.
+
+* Update the link to the current release in the *main branch* of the
+  frontend repository by editing `APP_VERSION` in
+  `src/components/pages/install/install.page.tsx`
+
+* Push and that's it, Github and Cloudflare build automation should deploy
+  the change in a few minutes.
 
 Upload the symbols to bugsnag, on a terminal: 
 - if first time install the upload tool `brew install bugsnag/tap/bugsnag-dsym-upload`
