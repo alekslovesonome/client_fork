@@ -18,12 +18,17 @@ this repository uses git LFS, be sure to run
     brew install git-lfs
     git lfs install
 
+The general C++ dependencies are handled by vcpkg. Run these commands to build them:
+
+    git submodule update --init
+    ./vcpkg/bootstrap-vcpkg.sh
+    ./vcpkg/vcpkg install
+
 on Mac, open client_generic/MacBuild/infinidream.xcodeproj
 
 Use the "File>Packages>Update to Latest" menu to load the
-dependencies.
+Mac specific dependencies.
 
-The C++ dependencies are handled by vcpkg...
 
 There are four targets: app, screensaver, staging app, and staging
 screensaver. The staging targets have their own directory
@@ -35,6 +40,17 @@ screensaver. The staging targets have their own directory
 ### Prerequisites
 - Xcode 14.0 or later
 - macOS 12.4 or later
+
+### Quick Build for Debugging
+
+The just run the app in xcode with the debugger and without
+making the embedded screensaver:
+
+   cd client_generic/MacBuild
+   mkdir -p Resources/infinidream.saver
+
+Then in xcode just use command-R.
+
 
 ### Build Script
 ```bash
