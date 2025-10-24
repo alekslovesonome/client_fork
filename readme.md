@@ -10,6 +10,7 @@ Copyright e-dream, inc
 infinidream: visuals for your vibe.
 a platform for generative visuals.
 this repository has the native client.
+See the [backend](https://github.com/e-dream-ai/backend) for the server that it connects to.
 
 # dev docs
 
