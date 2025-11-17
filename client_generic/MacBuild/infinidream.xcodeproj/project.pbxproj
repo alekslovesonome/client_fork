@@ -47,6 +47,10 @@
 		12A00CDC2B0FCA6C001C0792 /* e-dream-attr.png in Resources */ = {isa = PBXBuildFile; fileRef = 12A00CDB2B0FCA6C001C0792 /* e-dream-attr.png */; };
 		12A00CDD2B0FCA6C001C0792 /* e-dream-attr.png in Resources */ = {isa = PBXBuildFile; fileRef = 12A00CDB2B0FCA6C001C0792 /* e-dream-attr.png */; };
 		12CA4A462B83DE3D00A2EAD6 /* libsioclient_tls.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 12CA4A452B83DE3D00A2EAD6 /* libsioclient_tls.a */; };
+		1BEBFE3E2ECB6B2B00F39019 /* osd-next.png in Resources */ = {isa = PBXBuildFile; fileRef = 1BEBFE3D2ECB6B2B00F39019 /* osd-next.png */; };
+		1BEBFE3F2ECB6B2B00F39019 /* osd-next.png in Resources */ = {isa = PBXBuildFile; fileRef = 1BEBFE3D2ECB6B2B00F39019 /* osd-next.png */; };
+		1BEBFE402ECB6B2B00F39019 /* osd-next.png in Resources */ = {isa = PBXBuildFile; fileRef = 1BEBFE3D2ECB6B2B00F39019 /* osd-next.png */; };
+		1BEBFE412ECB6B2B00F39019 /* osd-next.png in Resources */ = {isa = PBXBuildFile; fileRef = 1BEBFE3D2ECB6B2B00F39019 /* osd-next.png */; };
 		21006FC81017BC4B004A6511 /* Credits.html in CopyFiles */ = {isa = PBXBuildFile; fileRef = 21006FBD1017BC2C004A6511 /* Credits.html */; };
 		210335040F549BEF00A83F17 /* AlignedBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 210335030F549BEF00A83F17 /* AlignedBuffer.cpp */; };
 		210335050F549BEF00A83F17 /* AlignedBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 210335030F549BEF00A83F17 /* AlignedBuffer.cpp */; };
@@ -90,11 +94,7 @@
 		2160FCAB0F30F48200B2C27A /* libz.1.2.5.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 212B1AD90E8E6E0100CE185C /* libz.1.2.5.dylib */; };
 		2160FCAC0F30F48200B2C27A /* libbz2.1.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 212B1ADD0E8E6E5000CE185C /* libbz2.1.0.dylib */; };
 		2160FCAF0F30F48200B2C27A /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2135D2670EC70571005E246D /* AppKit.framework */; };
-		2160FE7C0F30F8A000B2C27A /* vote-down.png in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2160FE190F30F82800B2C27A /* vote-down.png */; };
-		2160FE7D0F30F8A000B2C27A /* vote-up.png in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2160FE1A0F30F82800B2C27A /* vote-up.png */; };
 		2160FE800F30F8A000B2C27A /* logo.png in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2160FE240F30F82800B2C27A /* logo.png */; };
-		2160FEE90F30F9FB00B2C27A /* vote-down.png in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2160FE190F30F82800B2C27A /* vote-down.png */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		2160FEEA0F30F9FB00B2C27A /* vote-up.png in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2160FE1A0F30F82800B2C27A /* vote-up.png */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		2160FEED0F30F9FB00B2C27A /* logo.png in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2160FE240F30F82800B2C27A /* logo.png */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		2161F1940ECF8CEF00FE48E9 /* libz.1.2.5.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 212B1AD90E8E6E0100CE185C /* libz.1.2.5.dylib */; };
 		218878D50EC6CDE2001ABD2E /* Common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 212B192A0E8E591000CE185C /* Common.cpp */; };
@@ -446,8 +446,6 @@
 		F0C100762C1372EF007FA505 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2135D2670EC70571005E246D /* AppKit.framework */; };
 		F0C100772C1372EF007FA505 /* VideoDecodeAcceleration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2197D56119B06F4600EFA1F2 /* VideoDecodeAcceleration.framework */; };
 		F0C100782C1372EF007FA505 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21CE8E3B0F6EE12B00DDF96A /* SystemConfiguration.framework */; };
-		F0C1007C2C1372EF007FA505 /* vote-down.png in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2160FE190F30F82800B2C27A /* vote-down.png */; };
-		F0C1007D2C1372EF007FA505 /* vote-up.png in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2160FE1A0F30F82800B2C27A /* vote-up.png */; };
 		F0C1007E2C1372EF007FA505 /* logo.png in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2160FE240F30F82800B2C27A /* logo.png */; };
 		F0C16C122E01DE870039EC33 /* FirstTimeSetupManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = F0C16C112E01DE870039EC33 /* FirstTimeSetupManager.mm */; };
 		F0C16C132E01DE870039EC33 /* FirstTimeSetupManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = F0C16C112E01DE870039EC33 /* FirstTimeSetupManager.mm */; };
@@ -562,8 +560,6 @@
 		F0E9CEA22C136B0500C4D694 /* VideoToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 464A49DA2AB8864600C77F6D /* VideoToolbox.framework */; };
 		F0E9CEA32C136B0500C4D694 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21CE8E3B0F6EE12B00DDF96A /* SystemConfiguration.framework */; };
 		F0E9CEA52C136B0500C4D694 /* Lato.sddf in CopyFiles */ = {isa = PBXBuildFile; fileRef = 12A00CD42B0D31E6001C0792 /* Lato.sddf */; };
-		F0E9CEA92C136B0500C4D694 /* vote-down.png in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2160FE190F30F82800B2C27A /* vote-down.png */; };
-		F0E9CEAA2C136B0500C4D694 /* vote-up.png in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2160FE1A0F30F82800B2C27A /* vote-up.png */; };
 		F0E9CEAB2C136B0500C4D694 /* logo.png in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2160FE240F30F82800B2C27A /* logo.png */; };
 		F0E9CEAC2C136B0500C4D694 /* Credits.html in CopyFiles */ = {isa = PBXBuildFile; fileRef = 21006FBD1017BC2C004A6511 /* Credits.html */; };
 		F0F4CE4C2E785E6F00C1F6AA /* ScreensaverHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0F4CE4B2E785E6F00C1F6AA /* ScreensaverHelper.swift */; };
@@ -642,8 +638,6 @@
 			dstSubfolderSpec = 7;
 			files = (
 				12A00CD72B0D31F9001C0792 /* Lato.sddf in CopyFiles */,
-				2160FE7C0F30F8A000B2C27A /* vote-down.png in CopyFiles */,
-				2160FE7D0F30F8A000B2C27A /* vote-up.png in CopyFiles */,
 				2160FE800F30F8A000B2C27A /* logo.png in CopyFiles */,
 				21006FC81017BC4B004A6511 /* Credits.html in CopyFiles */,
 			);
@@ -655,8 +649,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 7;
 			files = (
-				2160FEE90F30F9FB00B2C27A /* vote-down.png in CopyFiles */,
-				2160FEEA0F30F9FB00B2C27A /* vote-up.png in CopyFiles */,
 				2160FEED0F30F9FB00B2C27A /* logo.png in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -667,8 +659,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 7;
 			files = (
-				F0C1007C2C1372EF007FA505 /* vote-down.png in CopyFiles */,
-				F0C1007D2C1372EF007FA505 /* vote-up.png in CopyFiles */,
 				F0C1007E2C1372EF007FA505 /* logo.png in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -689,8 +679,6 @@
 			dstSubfolderSpec = 7;
 			files = (
 				F0E9CEA52C136B0500C4D694 /* Lato.sddf in CopyFiles */,
-				F0E9CEA92C136B0500C4D694 /* vote-down.png in CopyFiles */,
-				F0E9CEAA2C136B0500C4D694 /* vote-up.png in CopyFiles */,
 				F0E9CEAB2C136B0500C4D694 /* logo.png in CopyFiles */,
 				F0E9CEAC2C136B0500C4D694 /* Credits.html in CopyFiles */,
 			);
@@ -773,6 +761,7 @@
 		12A00CDB2B0FCA6C001C0792 /* e-dream-attr.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "e-dream-attr.png"; sourceTree = "<group>"; };
 		12CA4A452B83DE3D00A2EAD6 /* libsioclient_tls.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsioclient_tls.a; path = "../socket.io-client-cpp/lib/libsioclient_tls.a"; sourceTree = "<group>"; };
 		12D020022B83C86C0036357D /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = "../openssl-1.0.2k/MacOS/lib/libssl.a"; sourceTree = "<group>"; };
+		1BEBFE3D2ECB6B2B00F39019 /* osd-next.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "osd-next.png"; sourceTree = "<group>"; };
 		21006FBD1017BC2C004A6511 /* Credits.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = Credits.html; sourceTree = SOURCE_ROOT; };
 		21008B760EB7D69900E64796 /* Console.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Console.h; path = ../Client/Console.h; sourceTree = SOURCE_ROOT; };
 		210335030F549BEF00A83F17 /* AlignedBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AlignedBuffer.cpp; path = ../Common/AlignedBuffer.cpp; sourceTree = SOURCE_ROOT; };
@@ -815,8 +804,6 @@
 		214B75060EBBA78900B5B897 /* Rect.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Rect.cpp; path = ../Common/Math/Rect.cpp; sourceTree = SOURCE_ROOT; };
 		215545A812620D3000AB51BF /* dsa_pub.pem */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = dsa_pub.pem; sourceTree = "<group>"; };
 		2160FAAD0F30F43600B2C27A /* infinidream.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = infinidream.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		2160FE190F30F82800B2C27A /* vote-down.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "vote-down.png"; sourceTree = "<group>"; };
-		2160FE1A0F30F82800B2C27A /* vote-up.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "vote-up.png"; sourceTree = "<group>"; };
 		2160FE240F30F82800B2C27A /* logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = logo.png; sourceTree = "<group>"; };
 		218878D00EC6CD7E001ABD2E /* infinidream.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = infinidream.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		218878D10EC6CD7E001ABD2E /* ScreenSaver-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ScreenSaver-Info.plist"; sourceTree = "<group>"; };
@@ -1439,14 +1426,13 @@
 		2160FE160F30F82800B2C27A /* Runtime */ = {
 			isa = PBXGroup;
 			children = (
+				1BEBFE3D2ECB6B2B00F39019 /* osd-next.png */,
 				21934CB819F3C2430096E7D7 /* thumbnail.tif */,
 				12A00CDB2B0FCA6C001C0792 /* e-dream-attr.png */,
 				21006FBD1017BC2C004A6511 /* Credits.html */,
 				12A00CD82B0FCA39001C0792 /* infinidream.icns */,
 				12A00CD42B0D31E6001C0792 /* Lato.sddf */,
 				4628A55D2B0F84EF001C3078 /* Lato-Regular.ttf */,
-				2160FE190F30F82800B2C27A /* vote-down.png */,
-				2160FE1A0F30F82800B2C27A /* vote-up.png */,
 				2160FE240F30F82800B2C27A /* logo.png */,
 				21ADBB211305D380000A9F20 /* green.tif */,
 				21ADBB221305D380000A9F20 /* red.tif */,
@@ -1747,6 +1733,7 @@
 				1243576C2B31FC1B00CCD62A /* BuildData.json in Resources */,
 				12A00CD52B0D31E6001C0792 /* Lato.sddf in Resources */,
 				F05994732BA0A07300B018C7 /* osd-forward10.png in Resources */,
+				1BEBFE3E2ECB6B2B00F39019 /* osd-next.png in Resources */,
 				F05994752BA0A07300B018C7 /* osd-brightness.png in Resources */,
 				F0F6D4262BCD504500222647 /* osd-like.png in Resources */,
 				21AAA0BD0F7040B500AC23A8 /* ElectricSheep.nib in Resources */,
@@ -1786,6 +1773,7 @@
 				F0B754512DBFCE4400C59D7A /* network.png in Resources */,
 				F02C150B2E0194A000BFFFF4 /* CodeStepViewController.xib in Resources */,
 				F05994722BA0A07300B018C7 /* osd-speed.png in Resources */,
+				1BEBFE3F2ECB6B2B00F39019 /* osd-next.png in Resources */,
 				F05994592BA0912300B018C7 /* osd-pill-r.png in Resources */,
 				F059945F2BA0912300B018C7 /* osd-bg-700.png in Resources */,
 				F05994782BA0A07300B018C7 /* osd-pause.png in Resources */,
@@ -1829,6 +1817,7 @@
 				F0C100052C1372EF007FA505 /* BuildData.json in Resources */,
 				F0C100062C1372EF007FA505 /* Lato.sddf in Resources */,
 				F0C100072C1372EF007FA505 /* osd-forward10.png in Resources */,
+				1BEBFE412ECB6B2B00F39019 /* osd-next.png in Resources */,
 				F0C100082C1372EF007FA505 /* osd-brightness.png in Resources */,
 				F0C100092C1372EF007FA505 /* osd-like.png in Resources */,
 				F0C1000A2C1372EF007FA505 /* ElectricSheep.nib in Resources */,
@@ -1868,6 +1857,7 @@
 				F0B754532DBFCE4400C59D7A /* network.png in Resources */,
 				F02C15082E0194A000BFFFF4 /* CodeStepViewController.xib in Resources */,
 				F0E9CE2F2C136B0500C4D694 /* osd-speed.png in Resources */,
+				1BEBFE402ECB6B2B00F39019 /* osd-next.png in Resources */,
 				F0E9CE302C136B0500C4D694 /* osd-pill-r.png in Resources */,
 				F0E9CE312C136B0500C4D694 /* osd-bg-700.png in Resources */,
 				F0E9CE322C136B0500C4D694 /* osd-pause.png in Resources */,
