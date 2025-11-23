@@ -503,12 +503,13 @@ EDreamClient::AuthResult EDreamClient::SendCode() {
         g_Log->Error("Email address not found in settings");
         return AuthResult(false, "Email address not provided");
     }
-    
-    CURL *curl;
+        
     CURLcode res;
     std::string readBuffer;
+        
+    auto curlDeleter = [](CURL* c){ if(c) curl_easy_cleanup(c); };
+    std::unique_ptr<CURL, decltype(curlDeleter)> curl(curl_easy_init(), curlDeleter);
     
-    curl = curl_easy_init();
     if (curl) {
         std::string url = ServerConfig::ServerConfigManager::getInstance().getEndpoint(ServerConfig::Endpoint::LOGIN_MAGIC);
         
@@ -517,19 +518,18 @@ EDreamClient::AuthResult EDreamClient::SendCode() {
         payload["email"] = email;
         std::string jsonBody = boost::json::serialize(payload);
         
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, jsonBody.c_str());
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+        curl_easy_setopt(curl.get(), CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl.get(), CURLOPT_POSTFIELDS, jsonBody.c_str());
+        curl_easy_setopt(curl.get(), CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl.get(), CURLOPT_WRITEDATA, &readBuffer);
         
         // Set headers
         struct curl_slist *headers = NULL;
         headers = curl_slist_append(headers, "Content-Type: application/json");
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+        curl_easy_setopt(curl.get(), CURLOPT_HTTPHEADER, headers);
         
-        res = curl_easy_perform(curl);
+        res = curl_easy_perform(curl.get());
         curl_slist_free_all(headers);
-        curl_easy_cleanup(curl);
         
         if(res != CURLE_OK) {
             g_Log->Error("Failed to send verification code. Curl error: %s", curl_easy_strerror(res));
@@ -537,7 +537,7 @@ EDreamClient::AuthResult EDreamClient::SendCode() {
         }
         
         long http_code = 0;
-        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+        curl_easy_getinfo(curl.get(), CURLINFO_RESPONSE_CODE, &http_code);
         
         if (http_code == 200) {
             g_Log->Info("Verification code sent successfully to %s", email.c_str());
@@ -550,7 +550,7 @@ EDreamClient::AuthResult EDreamClient::SendCode() {
                 boost::json::value response = boost::json::parse(readBuffer);
                 if (response.is_object() && response.as_object().contains("message")) {
                     // Extract just the error message from the JSON
-                    errorMessage = response.as_object()["message"].as_string().c_str();
+                    errorMessage = response.as_object()["message"].as_string();
                 } else {
                     errorMessage = readBuffer; // Use full response if not in expected format
                 }
