@@ -83,9 +83,16 @@ void CHudManager::HideAll()
 //
 void CHudManager::Toggle(const std::string _entry)
 {
-    bool bState = m_EntryMap[_entry]->Visible();
+    auto it = m_EntryMap.find(_entry);
+
+    if (it == m_EntryMap.end())
+    {
+        return;
+    }
+
+    bool bState = it->second->Visible();
     HideAll();
-    m_EntryMap[_entry]->Visible(!bState);
+    it->second->Visible(!bState);
 }
 
 void CHudManager::Hide(const std::string _entry)
