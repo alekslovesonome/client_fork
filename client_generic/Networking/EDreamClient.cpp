@@ -71,6 +71,7 @@ long long EDreamClient::remainingQuota = 0;
 std::atomic<bool> EDreamClient::fIsLoggedIn(false);
 std::atomic<int> EDreamClient::fCpuUsage(0);
 std::mutex EDreamClient::fAuthMutex;
+std::condition_variable EDreamClient::fAuthCV;
 std::mutex EDreamClient::fWebSocketMutex;
 std::atomic<bool> EDreamClient::fIsWebSocketConnected(false);
 std::atomic<int> fWebSocketConnectionAttempts(0);
@@ -292,9 +293,14 @@ void EDreamClient::InitializeClient()
     s_SIOClient.set_fail_listener(&OnWebSocketFail);
     s_SIOClient.set_reconnecting_listener(&OnWebSocketReconnecting);
     s_SIOClient.set_reconnect_listener(&OnWebSocketReconnect);
-
-    fAuthMutex.lock();
+    
     boost::thread authThread(&EDreamClient::Authenticate);
+    authThread.detach();
+
+    // Block main thread until authentication completes
+    std::unique_lock<std::mutex> lock(fAuthMutex);
+    fAuthCV.wait(lock);
+    // Authentication thread will notify us when done (success or failure)
 }
 
 void EDreamClient::DeinitializeClient()
@@ -331,8 +337,7 @@ bool EDreamClient::Authenticate()
 {
     PlatformUtils::SetThreadName("Authenticate");
     g_Log->Info("Starting Authentication...");
-    //std::lock_guard<std::mutex> lock(fAuthMutex);
-    
+
     // Check if we have a sealed session
     std::string sealedSession = g_Settings()->Get("settings.content.sealed_session", std::string(""));
 
@@ -355,8 +360,9 @@ bool EDreamClient::Authenticate()
         g_Log->Warning("No sealed session found");
     }
 
+    // Update login state and notify waiting thread
     fIsLoggedIn.exchange(success);
-    fAuthMutex.unlock();
+    fAuthCV.notify_one();
     g_Log->Info("Sign in success: %s", success ? "true" : "false");
 
     if (success)

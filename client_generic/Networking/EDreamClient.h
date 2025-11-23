@@ -5,6 +5,7 @@
 #include <memory>
 #include <atomic>
 #include <mutex>
+#include <condition_variable>
 #include <tuple>
 #include <sstream>
 #include <boost/asio.hpp>
@@ -28,6 +29,7 @@ class EDreamClient
     static std::atomic<bool> fIsLoggedIn;
     static std::atomic<int> fCpuUsage;
     static std::mutex fAuthMutex;
+    static std::condition_variable fAuthCV;
     static std::mutex fWebSocketMutex;
 public:
     static std::atomic<bool> fIsWebSocketConnected;
