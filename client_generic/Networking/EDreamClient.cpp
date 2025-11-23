@@ -404,7 +404,7 @@ void EDreamClient::DidSignIn()
     g_Log->Info("Did Sign-in");
     std::lock_guard<std::mutex> lock(fAuthMutex);
     fIsLoggedIn.exchange(true);
-    
+
     // Restart the player if it was previously stopped (e.g., after sign-out)
     if (!g_Player().HasStarted())
     {
@@ -444,23 +444,25 @@ void EDreamClient::DidSignIn()
 
 void EDreamClient::SignOut()
 {
-    std::lock_guard<std::mutex> lock(fAuthMutex);
-    
     g_Log->Info("Sign out initiated");
-    
-    // Retrieve the current sealed session from settings
-    std::string currentSealedSession = g_Settings()->Get("settings.content.sealed_session", std::string(""));
-    
-    if (currentSealedSession.empty())
+
+    std::string currentSealedSession;
     {
-        g_Log->Error("No current sealed session found in settings");
-        return;
-    }
+        std::lock_guard<std::mutex> lock(fAuthMutex);
+        // Retrieve the current sealed session from settings
+        currentSealedSession = g_Settings()->Get("settings.content.sealed_session", std::string(""));
+
+        if (currentSealedSession.empty())
+        {
+            g_Log->Error("No current sealed session found in settings");
+            return;
+        }
+    }  // Release lock before network operations
 
     Network::spCFileDownloader spDownload = std::make_shared<Network::CFileDownloader>("Sign out Sealed Session");
     Network::NetworkHeaders::addStandardHeaders(spDownload);
     spDownload->AppendHeader("Content-Type: application/json");
-    
+
     // Set the cookie with the current sealed session
     std::string cookieHeader = "Cookie: wos-session=" + currentSealedSession;
     spDownload->AppendHeader(cookieHeader);
@@ -481,15 +483,18 @@ void EDreamClient::SignOut()
     {
         g_Log->Error("Network error while signing out");
     }
-    
-    fIsLoggedIn.exchange(false);
-    g_Settings()->Set("settings.content.sealed_session", std::string(""));
-    g_Settings()->Set("settings.content.refresh_token", std::string(""));
-    g_Settings()->Storage()->Commit();
+
+    {
+        std::lock_guard<std::mutex> lock(fAuthMutex);
+        fIsLoggedIn.exchange(false);
+        g_Settings()->Set("settings.content.sealed_session", std::string(""));
+        g_Settings()->Set("settings.content.refresh_token", std::string(""));
+        g_Settings()->Storage()->Commit();
+    }  // Release lock before external calls
 
     // Shutdown websocket
     DeinitializeClient();
-    
+
     g_Player().Stop();
 }
 
