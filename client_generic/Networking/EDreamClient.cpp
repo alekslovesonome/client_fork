@@ -18,6 +18,7 @@
 #include "NetworkConfig.h"
 #include "PathManager.h"
 #include "client.h"
+#include "Hud.h"
 #include "clientversion.h"
 #include "EDreamClient.h"
 #include "JSONUtil.h"
@@ -107,8 +108,76 @@ std::unique_ptr<boost::asio::steady_timer> EDreamClient::quota_timer = nullptr;
 // MARK: Ping via websocket
 void EDreamClient::SendPing()
 {
-    s_SIOClient.socket("/remote-control")->emit("ping");
-    g_Log->Info("Ping sent");
+    // Check if websocket is connected
+    auto socket = s_SIOClient.socket("/remote-control");
+    if (!socket) {
+        g_Log->Warning("SendPing: WebSocket not connected, skipping ping");
+        ScheduleNextPing();
+        return;
+    }
+
+    // Send simple ping first (for backwards compatibility / basic keepalive)
+    socket->emit("ping");
+    g_Log->Info("WebSocket emit: event='ping'");
+
+    // Get current player state
+    const ContentDecoder::sClipMetadata* clipMetadata = g_Player().GetCurrentPlayingClipMetadata();
+    const ContentDecoder::sFrameMetadata* frameMetadata = g_Player().GetCurrentFrameMetadata();
+
+    // Create state sync message
+    std::shared_ptr<sio::object_message> ms =
+        std::dynamic_pointer_cast<sio::object_message>(
+            sio::object_message::create());
+
+    // Add current dream UUID if available
+    std::string dreamUUID = "none";
+    if (clipMetadata && !clipMetadata->dreamData.uuid.empty()) {
+        dreamUUID = clipMetadata->dreamData.uuid;
+        ms->insert("dream_uuid", dreamUUID);
+    }
+
+    // Add current playlist UUID if available
+    std::string playlistUUID = g_Settings()->Get("settings.content.current_playlist_uuid", std::string(""));
+    if (!playlistUUID.empty()) {
+        ms->insert("playlist", playlistUUID);
+    }
+
+    // Add current timecode
+    double timecode = g_Player().m_TimelineTime;
+    ms->insert("timecode", std::to_string(timecode));
+
+    // Add HUD state
+    std::string hudState = "none";
+    Hud::spCHudManager hudManager = g_Client()->GetHudManager();
+    if (hudManager) {
+        auto helpEntry = hudManager->Get("helpmessage");
+        auto statsEntry = hudManager->Get("dreamstats");
+
+        if (helpEntry && helpEntry->Visible()) {
+            hudState = "help";
+        } else if (statsEntry && statsEntry->Visible()) {
+            hudState = "stats";
+        }
+        ms->insert("hud", hudState);
+    }
+
+    // Add paused state
+    std::string pausedState = g_Player().IsPaused() ? "true" : "false";
+    ms->insert("paused", pausedState);
+
+    // Send state sync data
+    sio::message::list list;
+    list.push(ms);
+    socket->emit("state_sync", list);
+
+    // Log EXACTLY what was sent to socket
+    g_Log->Info("WebSocket emit: event='state_sync' data={dream_uuid:'%s', playlist:'%s', timecode:%.2f, hud:'%s', paused:'%s'}",
+                dreamUUID.c_str(),
+                !playlistUUID.empty() ? playlistUUID.c_str() : "none",
+                timecode,
+                hudState.c_str(),
+                pausedState.c_str());
+
     ScheduleNextPing();
 }
 
@@ -120,6 +189,14 @@ void EDreamClient::ScheduleNextPing()
             SendPing();
         }
     });
+}
+
+void EDreamClient::SendStateUpdate()
+{
+    // Cancel pending ping timer and send state update immediately
+    ping_timer->cancel();
+    SendPing();
+    // SendPing() will reschedule the next ping automatically
 }
 
 // MARK: Quota update timer

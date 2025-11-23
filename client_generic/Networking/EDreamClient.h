@@ -85,6 +85,7 @@ private:
     static void ConnectRemoteControlSocket();
     static void SendPlayingDream(std::string uuid);
     static void SendPing();
+    static void SendStateUpdate();  // Send state update immediately when values change
 
     static void Like(std::string uuid);
     static void Dislike(std::string uuid);

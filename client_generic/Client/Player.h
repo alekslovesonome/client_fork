@@ -239,13 +239,19 @@ class CPlayer : public Base::CSingleton<CPlayer>
     void ForceWidthAndHeight(uint32_t du, uint32_t _w, uint32_t _h);
     
     void SetPaused(bool _bPaused, bool isUserInitiated = false) {
+        bool stateChanged = (m_bPaused != _bPaused);
         m_bPaused = _bPaused;
-        
+
         // Set on pause when manually initiated, or unset
         if (isUserInitiated && _bPaused) {
             m_UserPaused = _bPaused;
         } else {
             m_UserPaused = false;
+        }
+
+        if (stateChanged) {
+            g_Log->Info("Pause state changed to %s, syncing to server", _bPaused ? "paused" : "playing");
+            EDreamClient::SendStateUpdate();
         }
     }
 
@@ -272,6 +278,10 @@ class CPlayer : public Base::CSingleton<CPlayer>
 
     bool IsUserPaused() const {
         return m_UserPaused;
+    }
+
+    bool IsPaused() const {
+        return m_bPaused;
     }
 
     bool IsAnyClipBuffering() const;
