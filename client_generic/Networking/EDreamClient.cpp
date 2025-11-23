@@ -100,9 +100,9 @@ static void SetNewAndDeleteOldString(
 }
 
 
-std::unique_ptr<boost::asio::io_context> EDreamClient::io_context = std::make_unique<boost::asio::io_context>();
-std::unique_ptr<boost::asio::steady_timer> EDreamClient::ping_timer = std::make_unique<boost::asio::steady_timer>(*io_context);
-std::unique_ptr<boost::asio::steady_timer> EDreamClient::quota_timer = std::make_unique<boost::asio::steady_timer>(*io_context);
+std::unique_ptr<boost::asio::io_context> EDreamClient::io_context = nullptr;
+std::unique_ptr<boost::asio::steady_timer> EDreamClient::ping_timer = nullptr;
+std::unique_ptr<boost::asio::steady_timer> EDreamClient::quota_timer = nullptr;
 
 // MARK: Ping via websocket
 void EDreamClient::SendPing()
@@ -288,12 +288,19 @@ void EDreamClient::InitializeClient()
         return;
     }
 
+    // Initialize io_context and timers on first use to avoid static initialization order issues
+    if (!io_context) {
+        io_context = std::make_unique<boost::asio::io_context>();
+        ping_timer = std::make_unique<boost::asio::steady_timer>(*io_context);
+        quota_timer = std::make_unique<boost::asio::steady_timer>(*io_context);
+    }
+
     s_SIOClient.set_open_listener(&OnWebSocketConnected);
     s_SIOClient.set_close_listener(&OnWebSocketClosed);
     s_SIOClient.set_fail_listener(&OnWebSocketFail);
     s_SIOClient.set_reconnecting_listener(&OnWebSocketReconnecting);
     s_SIOClient.set_reconnect_listener(&OnWebSocketReconnect);
-    
+
     boost::thread authThread(&EDreamClient::Authenticate);
     authThread.detach();
 
