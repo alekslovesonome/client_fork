@@ -193,10 +193,14 @@ void EDreamClient::ScheduleNextPing()
 
 void EDreamClient::SendStateUpdate()
 {
-    // Cancel pending ping timer and send state update immediately
-    ping_timer->cancel();
-    SendPing();
-    // SendPing() will reschedule the next ping automatically
+    // Post to io_context thread for thread safety
+    // boost::asio timers are not thread-safe for cancel() from multiple threads
+    if (io_context && !io_context->stopped()) {
+        boost::asio::post(*io_context, []() {
+            ping_timer->cancel();
+            SendPing();
+        });
+    }
 }
 
 // MARK: Quota update timer
