@@ -787,6 +787,9 @@ bool CPlayer::PlayClip(const Cache::Dream* dream, double _startTime, int64_t _se
         
         m_currentClip = newClip;
         m_isTransitioning = false;
+
+        g_Log->Info("Dream changed, syncing state to server");
+        EDreamClient::SendStateUpdate();
     } else if (isTransition) {
         if (m_nextClip) {
             destroyClipAsync(std::move(m_nextClip));
@@ -850,6 +853,9 @@ void CPlayer::PlayNextDream(bool quickFade) {
 
                 m_currentClip->SetStartTime(m_TimelineTime);
                 m_currentClip->SetTransitionLength(0.0, 0.0);
+
+                g_Log->Info("Seamless transition complete, syncing state to server");
+                EDreamClient::SendStateUpdate();
                 m_currentClip->ResetFinished();
                 
                 const Cache::Dream* nextDream = m_playlistManager->moveToNextDream(*m_nextDreamDecision);
@@ -1078,6 +1084,9 @@ bool CPlayer::SetPlaylist(const std::string& playlistUUID, bool fetchPlaylist = 
                 if (m_currentClip) {
                     m_currentClip->SetTransitionLength(5.0, 5.0);
                 }
+
+                g_Log->Info("Playlist changed, syncing state to server");
+                EDreamClient::SendStateUpdate();
                 return true;
             }
         }

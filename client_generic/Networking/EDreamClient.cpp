@@ -18,6 +18,7 @@
 #include "NetworkConfig.h"
 #include "PathManager.h"
 #include "client.h"
+#include "Hud.h"
 #include "clientversion.h"
 #include "EDreamClient.h"
 #include "JSONUtil.h"
@@ -71,6 +72,7 @@ long long EDreamClient::remainingQuota = 0;
 std::atomic<bool> EDreamClient::fIsLoggedIn(false);
 std::atomic<int> EDreamClient::fCpuUsage(0);
 std::mutex EDreamClient::fAuthMutex;
+std::condition_variable EDreamClient::fAuthCV;
 std::mutex EDreamClient::fWebSocketMutex;
 std::atomic<bool> EDreamClient::fIsWebSocketConnected(false);
 std::atomic<int> fWebSocketConnectionAttempts(0);
@@ -99,15 +101,83 @@ static void SetNewAndDeleteOldString(
 }
 
 
-std::unique_ptr<boost::asio::io_context> EDreamClient::io_context = std::make_unique<boost::asio::io_context>();
-std::unique_ptr<boost::asio::steady_timer> EDreamClient::ping_timer = std::make_unique<boost::asio::steady_timer>(*io_context);
-std::unique_ptr<boost::asio::steady_timer> EDreamClient::quota_timer = std::make_unique<boost::asio::steady_timer>(*io_context);
+std::unique_ptr<boost::asio::io_context> EDreamClient::io_context = nullptr;
+std::unique_ptr<boost::asio::steady_timer> EDreamClient::ping_timer = nullptr;
+std::unique_ptr<boost::asio::steady_timer> EDreamClient::quota_timer = nullptr;
 
 // MARK: Ping via websocket
 void EDreamClient::SendPing()
 {
-    s_SIOClient.socket("/remote-control")->emit("ping");
-    g_Log->Info("Ping sent");
+    // Check if websocket is connected
+    auto socket = s_SIOClient.socket("/remote-control");
+    if (!socket) {
+        g_Log->Warning("SendPing: WebSocket not connected, skipping ping");
+        ScheduleNextPing();
+        return;
+    }
+
+    // Send simple ping first (for backwards compatibility / basic keepalive)
+    socket->emit("ping");
+    g_Log->Info("WebSocket emit: event='ping'");
+
+    // Get current player state
+    const ContentDecoder::sClipMetadata* clipMetadata = g_Player().GetCurrentPlayingClipMetadata();
+    const ContentDecoder::sFrameMetadata* frameMetadata = g_Player().GetCurrentFrameMetadata();
+
+    // Create state sync message
+    std::shared_ptr<sio::object_message> ms =
+        std::dynamic_pointer_cast<sio::object_message>(
+            sio::object_message::create());
+
+    // Add current dream UUID if available
+    std::string dreamUUID = "none";
+    if (clipMetadata && !clipMetadata->dreamData.uuid.empty()) {
+        dreamUUID = clipMetadata->dreamData.uuid;
+        ms->insert("dream_uuid", dreamUUID);
+    }
+
+    // Add current playlist UUID if available
+    std::string playlistUUID = g_Settings()->Get("settings.content.current_playlist_uuid", std::string(""));
+    if (!playlistUUID.empty()) {
+        ms->insert("playlist", playlistUUID);
+    }
+
+    // Add current timecode
+    double timecode = g_Player().m_TimelineTime;
+    ms->insert("timecode", std::to_string(timecode));
+
+    // Add HUD state
+    std::string hudState = "none";
+    Hud::spCHudManager hudManager = g_Client()->GetHudManager();
+    if (hudManager) {
+        auto helpEntry = hudManager->Get("helpmessage");
+        auto statsEntry = hudManager->Get("dreamstats");
+
+        if (helpEntry && helpEntry->Visible()) {
+            hudState = "help";
+        } else if (statsEntry && statsEntry->Visible()) {
+            hudState = "stats";
+        }
+        ms->insert("hud", hudState);
+    }
+
+    // Add paused state
+    std::string pausedState = g_Player().IsPaused() ? "true" : "false";
+    ms->insert("paused", pausedState);
+
+    // Send state sync data
+    sio::message::list list;
+    list.push(ms);
+    socket->emit("state_sync", list);
+
+    // Log EXACTLY what was sent to socket
+    g_Log->Info("WebSocket emit: event='state_sync' data={dream_uuid:'%s', playlist:'%s', timecode:%.2f, hud:'%s', paused:'%s'}",
+                dreamUUID.c_str(),
+                !playlistUUID.empty() ? playlistUUID.c_str() : "none",
+                timecode,
+                hudState.c_str(),
+                pausedState.c_str());
+
     ScheduleNextPing();
 }
 
@@ -119,6 +189,18 @@ void EDreamClient::ScheduleNextPing()
             SendPing();
         }
     });
+}
+
+void EDreamClient::SendStateUpdate()
+{
+    // Post to io_context thread for thread safety
+    // boost::asio timers are not thread-safe for cancel() from multiple threads
+    if (io_context && !io_context->stopped()) {
+        boost::asio::post(*io_context, []() {
+            ping_timer->cancel();
+            SendPing();
+        });
+    }
 }
 
 // MARK: Quota update timer
@@ -287,14 +369,26 @@ void EDreamClient::InitializeClient()
         return;
     }
 
+    // Initialize io_context and timers on first use to avoid static initialization order issues
+    if (!io_context) {
+        io_context = std::make_unique<boost::asio::io_context>();
+        ping_timer = std::make_unique<boost::asio::steady_timer>(*io_context);
+        quota_timer = std::make_unique<boost::asio::steady_timer>(*io_context);
+    }
+
     s_SIOClient.set_open_listener(&OnWebSocketConnected);
     s_SIOClient.set_close_listener(&OnWebSocketClosed);
     s_SIOClient.set_fail_listener(&OnWebSocketFail);
     s_SIOClient.set_reconnecting_listener(&OnWebSocketReconnecting);
     s_SIOClient.set_reconnect_listener(&OnWebSocketReconnect);
 
-    fAuthMutex.lock();
     boost::thread authThread(&EDreamClient::Authenticate);
+    authThread.detach();
+
+    // Block main thread until authentication completes
+    std::unique_lock<std::mutex> lock(fAuthMutex);
+    fAuthCV.wait(lock);
+    // Authentication thread will notify us when done (success or failure)
 }
 
 void EDreamClient::DeinitializeClient()
@@ -331,8 +425,7 @@ bool EDreamClient::Authenticate()
 {
     PlatformUtils::SetThreadName("Authenticate");
     g_Log->Info("Starting Authentication...");
-    //std::lock_guard<std::mutex> lock(fAuthMutex);
-    
+
     // Check if we have a sealed session
     std::string sealedSession = g_Settings()->Get("settings.content.sealed_session", std::string(""));
 
@@ -355,8 +448,9 @@ bool EDreamClient::Authenticate()
         g_Log->Warning("No sealed session found");
     }
 
+    // Update login state and notify waiting thread
     fIsLoggedIn.exchange(success);
-    fAuthMutex.unlock();
+    fAuthCV.notify_one();
     g_Log->Info("Sign in success: %s", success ? "true" : "false");
 
     if (success)
@@ -391,7 +485,7 @@ void EDreamClient::DidSignIn()
     g_Log->Info("Did Sign-in");
     std::lock_guard<std::mutex> lock(fAuthMutex);
     fIsLoggedIn.exchange(true);
-    
+
     // Restart the player if it was previously stopped (e.g., after sign-out)
     if (!g_Player().HasStarted())
     {
@@ -431,23 +525,25 @@ void EDreamClient::DidSignIn()
 
 void EDreamClient::SignOut()
 {
-    std::lock_guard<std::mutex> lock(fAuthMutex);
-    
     g_Log->Info("Sign out initiated");
-    
-    // Retrieve the current sealed session from settings
-    std::string currentSealedSession = g_Settings()->Get("settings.content.sealed_session", std::string(""));
-    
-    if (currentSealedSession.empty())
+
+    std::string currentSealedSession;
     {
-        g_Log->Error("No current sealed session found in settings");
-        return;
-    }
+        std::lock_guard<std::mutex> lock(fAuthMutex);
+        // Retrieve the current sealed session from settings
+        currentSealedSession = g_Settings()->Get("settings.content.sealed_session", std::string(""));
+
+        if (currentSealedSession.empty())
+        {
+            g_Log->Error("No current sealed session found in settings");
+            return;
+        }
+    }  // Release lock before network operations
 
     Network::spCFileDownloader spDownload = std::make_shared<Network::CFileDownloader>("Sign out Sealed Session");
     Network::NetworkHeaders::addStandardHeaders(spDownload);
     spDownload->AppendHeader("Content-Type: application/json");
-    
+
     // Set the cookie with the current sealed session
     std::string cookieHeader = "Cookie: wos-session=" + currentSealedSession;
     spDownload->AppendHeader(cookieHeader);
@@ -468,15 +564,18 @@ void EDreamClient::SignOut()
     {
         g_Log->Error("Network error while signing out");
     }
-    
-    fIsLoggedIn.exchange(false);
-    g_Settings()->Set("settings.content.sealed_session", std::string(""));
-    g_Settings()->Set("settings.content.refresh_token", std::string(""));
-    g_Settings()->Storage()->Commit();
+
+    {
+        std::lock_guard<std::mutex> lock(fAuthMutex);
+        fIsLoggedIn.exchange(false);
+        g_Settings()->Set("settings.content.sealed_session", std::string(""));
+        g_Settings()->Set("settings.content.refresh_token", std::string(""));
+        g_Settings()->Storage()->Commit();
+    }  // Release lock before external calls
 
     // Shutdown websocket
     DeinitializeClient();
-    
+
     g_Player().Stop();
 }
 
@@ -503,12 +602,13 @@ EDreamClient::AuthResult EDreamClient::SendCode() {
         g_Log->Error("Email address not found in settings");
         return AuthResult(false, "Email address not provided");
     }
-    
-    CURL *curl;
+        
     CURLcode res;
     std::string readBuffer;
+        
+    auto curlDeleter = [](CURL* c){ if(c) curl_easy_cleanup(c); };
+    std::unique_ptr<CURL, decltype(curlDeleter)> curl(curl_easy_init(), curlDeleter);
     
-    curl = curl_easy_init();
     if (curl) {
         std::string url = ServerConfig::ServerConfigManager::getInstance().getEndpoint(ServerConfig::Endpoint::LOGIN_MAGIC);
         
@@ -517,19 +617,18 @@ EDreamClient::AuthResult EDreamClient::SendCode() {
         payload["email"] = email;
         std::string jsonBody = boost::json::serialize(payload);
         
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, jsonBody.c_str());
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+        curl_easy_setopt(curl.get(), CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl.get(), CURLOPT_POSTFIELDS, jsonBody.c_str());
+        curl_easy_setopt(curl.get(), CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl.get(), CURLOPT_WRITEDATA, &readBuffer);
         
         // Set headers
         struct curl_slist *headers = NULL;
         headers = curl_slist_append(headers, "Content-Type: application/json");
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+        curl_easy_setopt(curl.get(), CURLOPT_HTTPHEADER, headers);
         
-        res = curl_easy_perform(curl);
+        res = curl_easy_perform(curl.get());
         curl_slist_free_all(headers);
-        curl_easy_cleanup(curl);
         
         if(res != CURLE_OK) {
             g_Log->Error("Failed to send verification code. Curl error: %s", curl_easy_strerror(res));
@@ -537,7 +636,7 @@ EDreamClient::AuthResult EDreamClient::SendCode() {
         }
         
         long http_code = 0;
-        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+        curl_easy_getinfo(curl.get(), CURLINFO_RESPONSE_CODE, &http_code);
         
         if (http_code == 200) {
             g_Log->Info("Verification code sent successfully to %s", email.c_str());
@@ -575,33 +674,33 @@ bool EDreamClient::ValidateCode(const std::string& code)
         return false;
     }
 
-    CURL *curl;
     CURLcode res;
     std::string readBuffer;
 
-    curl = curl_easy_init();
+    auto curlDeleter = [](CURL* c){ if(c) curl_easy_cleanup(c); };
+    std::unique_ptr<CURL, decltype(curlDeleter)> curl(curl_easy_init(), curlDeleter);
+
     if(curl) {
         std::string url = ServerConfig::ServerConfigManager::getInstance().getEndpoint(ServerConfig::Endpoint::LOGIN_MAGIC);
-        
+
         // Prepare JSON payload
         boost::json::object payload;
         payload["email"] = email;
         payload["code"] = code;
         std::string jsonBody = boost::json::serialize(payload);
 
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, jsonBody.c_str());
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+        curl_easy_setopt(curl.get(), CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl.get(), CURLOPT_POSTFIELDS, jsonBody.c_str());
+        curl_easy_setopt(curl.get(), CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl.get(), CURLOPT_WRITEDATA, &readBuffer);
 
         // Set headers
         struct curl_slist *headers = NULL;
         headers = curl_slist_append(headers, "Content-Type: application/json");
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+        curl_easy_setopt(curl.get(), CURLOPT_HTTPHEADER, headers);
 
-        res = curl_easy_perform(curl);
+        res = curl_easy_perform(curl.get());
         curl_slist_free_all(headers);
-        curl_easy_cleanup(curl);
 
         if(res != CURLE_OK) {
             g_Log->Error("Failed to validate code. Curl error: %s", curl_easy_strerror(res));
@@ -609,7 +708,7 @@ bool EDreamClient::ValidateCode(const std::string& code)
         }
 
         long http_code = 0;
-        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+        curl_easy_getinfo(curl.get(), CURLINFO_RESPONSE_CODE, &http_code);
 
         if (http_code == 200) {
             try {

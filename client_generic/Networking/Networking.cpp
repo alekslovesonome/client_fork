@@ -17,7 +17,7 @@ namespace Network
         Constructor.
 */
 CCurlTransfer::CCurlTransfer(const std::string& _name)
-    : m_Name(_name), m_Status("Idle"), m_AverageSpeed("0 kb/s")
+    : m_Name(_name), m_Status("Idle"), m_AverageSpeed("0 kb/s"), m_HttpCode(0)
 {
     g_Log->Info("CCurlTransfer(%s)", _name.c_str());
     memset(errorBuffer, 0, CURL_ERROR_SIZE);
@@ -388,7 +388,7 @@ bool CCurlTransfer::Perform(const std::string& _url)
         CManager().
         Constructor.
 */
-CManager::CManager() {}
+CManager::CManager() : m_Aborted(false) {}
 
 /*
         Startup().

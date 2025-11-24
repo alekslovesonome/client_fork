@@ -5,6 +5,7 @@
 #include <memory>
 #include <atomic>
 #include <mutex>
+#include <condition_variable>
 #include <tuple>
 #include <sstream>
 #include <boost/asio.hpp>
@@ -28,6 +29,7 @@ class EDreamClient
     static std::atomic<bool> fIsLoggedIn;
     static std::atomic<int> fCpuUsage;
     static std::mutex fAuthMutex;
+    static std::condition_variable fAuthCV;
     static std::mutex fWebSocketMutex;
 public:
     static std::atomic<bool> fIsWebSocketConnected;
@@ -83,6 +85,7 @@ private:
     static void ConnectRemoteControlSocket();
     static void SendPlayingDream(std::string uuid);
     static void SendPing();
+    static void SendStateUpdate();  // Send state update immediately when values change
 
     static void Like(std::string uuid);
     static void Dislike(std::string uuid);

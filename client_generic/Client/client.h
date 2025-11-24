@@ -1298,10 +1298,12 @@ class CElectricSheep
     
     virtual bool ExecuteCommand(eClientCommand _command)
     {
+        g_Log->Info("ExecuteCommand called with command: %d", (int)_command);
+
         static const float voteDelaySeconds = 1;
         const ContentDecoder::sClipMetadata* data =
             g_Player().GetCurrentPlayingClipMetadata();
-        
+
         std::string currentDreamUUID;
         if (data != nullptr) {
             currentDreamUUID = data->dreamData.uuid;
@@ -1436,10 +1438,14 @@ class CElectricSheep
             case CLIENT_COMMAND_F1:
                 m_F1F4Timer.Reset();
                 m_HudManager->Toggle("helpmessage");
+                g_Log->Info("HUD toggled (F1), syncing state to server");
+                EDreamClient::SendStateUpdate();
                 return true;
             case CLIENT_COMMAND_F2:
                 m_F1F4Timer.Reset();
                 m_HudManager->Toggle("dreamstats");
+                g_Log->Info("HUD toggled (F2), syncing state to server");
+                EDreamClient::SendStateUpdate();
                 return true;
             case CLIENT_COMMAND_SKIP_FW:
                 popOSD(Hud::Forward10);

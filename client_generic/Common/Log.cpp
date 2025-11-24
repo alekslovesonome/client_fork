@@ -7,7 +7,7 @@
 
 #ifdef WIN32
 #include <io.h> // Import read/write in msvc
-#endif;
+#endif
 
 #if defined(_MSC_VER)
 #include <BaseTsd.h>
@@ -35,7 +35,7 @@ namespace Base
 
 */
 CLog::CLog()
-    : m_bActive(false), m_pFile(NULL), m_PipeReader(0),
+: m_bActive(false), m_pFile(NULL), m_OriginalSTDOUT(fileno(stdout)), m_PipeReader(0),
     m_pPipeReaderThread(nullptr)
 {
 }
