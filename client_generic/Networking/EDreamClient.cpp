@@ -165,18 +165,23 @@ void EDreamClient::SendPing()
     std::string pausedState = g_Player().IsPaused() ? "true" : "false";
     ms->insert("paused", pausedState);
 
+    // Add playback speed (FPS)
+    double playbackSpeed = g_Player().GetPerceptualFPS();
+    ms->insert("playback_speed", std::to_string(playbackSpeed));
+
     // Send state sync data
     sio::message::list list;
     list.push(ms);
     socket->emit("state_sync", list);
 
     // Log EXACTLY what was sent to socket
-    g_Log->Info("WebSocket emit: event='state_sync' data={dream_uuid:'%s', playlist:'%s', timecode:%.2f, hud:'%s', paused:'%s'}",
+    g_Log->Info("WebSocket emit: event='state_sync' data={dream_uuid:'%s', playlist:'%s', timecode:%.2f, hud:'%s', paused:'%s', playback_speed:%.2f}",
                 dreamUUID.c_str(),
                 !playlistUUID.empty() ? playlistUUID.c_str() : "none",
                 timecode,
                 hudState.c_str(),
-                pausedState.c_str());
+                pausedState.c_str(),
+                playbackSpeed);
 
     ScheduleNextPing();
 }
