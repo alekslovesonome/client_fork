@@ -1366,38 +1366,47 @@ class CElectricSheep
             case CLIENT_COMMAND_SPEED_1:
                 popOSD(Hud::Speed);
                 g_Player().SetPerceptualFPS(SpeedToPerceptualFPS(1));
+                EDreamClient::SendStateUpdate();
                 return true;
             case CLIENT_COMMAND_SPEED_2:
                 popOSD(Hud::Speed);
                 g_Player().SetPerceptualFPS(SpeedToPerceptualFPS(2));
+                EDreamClient::SendStateUpdate();
                 return true;
             case CLIENT_COMMAND_SPEED_3:
                 popOSD(Hud::Speed);
                 g_Player().SetPerceptualFPS(SpeedToPerceptualFPS(3));
+                EDreamClient::SendStateUpdate();
                 return true;
             case CLIENT_COMMAND_SPEED_4:
                 popOSD(Hud::Speed);
                 g_Player().SetPerceptualFPS(SpeedToPerceptualFPS(4));
+                EDreamClient::SendStateUpdate();
                 return true;
             case CLIENT_COMMAND_SPEED_5:
                 popOSD(Hud::Speed);
                 g_Player().SetPerceptualFPS(SpeedToPerceptualFPS(5));
+                EDreamClient::SendStateUpdate();
                 return true;
             case CLIENT_COMMAND_SPEED_6:
                 popOSD(Hud::Speed);
                 g_Player().SetPerceptualFPS(SpeedToPerceptualFPS(6));
+                EDreamClient::SendStateUpdate();
                 return true;
             case CLIENT_COMMAND_SPEED_7:
                 popOSD(Hud::Speed);
                 g_Player().SetPerceptualFPS(SpeedToPerceptualFPS(7));
+                EDreamClient::SendStateUpdate();
                 return true;
             case CLIENT_COMMAND_SPEED_8:
                 popOSD(Hud::Speed);
                 g_Player().SetPerceptualFPS(SpeedToPerceptualFPS(8));
+                EDreamClient::SendStateUpdate();
                 return true;
             case CLIENT_COMMAND_SPEED_9:
                 popOSD(Hud::Speed);
                 g_Player().SetPerceptualFPS(SpeedToPerceptualFPS(9));
+                EDreamClient::SendStateUpdate();
                 return true;
             case CLIENT_COMMAND_RESET_PLAYLIST:
                 printf("RESET PLAYLIST\n");
@@ -1429,10 +1438,12 @@ class CElectricSheep
             case CLIENT_COMMAND_PLAYBACK_SLOWER:
                 popOSD(Hud::Speed);
                 g_Player().MultiplyPerceptualFPS(1.f / 1.1224f);
+                EDreamClient::SendStateUpdate();
                 return true;
             case CLIENT_COMMAND_PLAYBACK_FASTER:
                 popOSD(Hud::Speed);
                 g_Player().MultiplyPerceptualFPS(1.1224f);
+                EDreamClient::SendStateUpdate();
                 return true;
                 //    OSD info.
             case CLIENT_COMMAND_F1:
@@ -1450,11 +1461,13 @@ class CElectricSheep
             case CLIENT_COMMAND_SKIP_FW:
                 popOSD(Hud::Forward10);
                 g_Player().SkipForward(10);
+                EDreamClient::SendStateUpdate();
                 return true;
             case CLIENT_COMMAND_SKIP_BW:
                 popOSD(Hud::Back10);
                 g_Player().SkipForward(-10);
                 return true;
+                EDreamClient::SendStateUpdate();
             case CLIENT_COMMAND_PAUSE:
                 if (m_bPaused) {
                     popOSD(Hud::Play);
@@ -1462,9 +1475,11 @@ class CElectricSheep
                     popOSD(Hud::Pause);
                 }
                 g_Player().SetPaused(m_bPaused = !m_bPaused, true);
+                EDreamClient::SendStateUpdate();
                 return true;
             case CLIENT_COMMAND_CREDIT:
                 m_HudManager->Toggle("dreamcredits");
+                EDreamClient::SendStateUpdate();
                 return true;
             case CLIENT_COMMAND_WEBPAGE:
                 if (data && !data->dreamData.frontendUrl.empty())
