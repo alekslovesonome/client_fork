@@ -457,13 +457,14 @@ std::optional<PlaylistManager::NextDreamDecision> PlaylistManager::preflightNext
     if (m_playbackMode == PlaybackMode::Normal) {
         // Normal mode: sequential playback
         size_t nextPos = (m_currentPosition + 1) % m_playlist.size();
+        const auto& currentEntry = m_playlist[m_currentPosition];
         const auto& nextEntry = m_playlist[nextPos];
 
         g_Log->Info("Preflight : Normal mode - going to position %zu", nextPos);
 
         decision = {
             nextPos,
-            TransitionType::StandardCrossfade,
+            determineTransitionType(currentEntry, nextEntry),
             m_cacheManager.getDream(nextEntry.uuid),
             nextEntry.startKeyframe,
             nextEntry.endKeyframe
@@ -478,7 +479,7 @@ std::optional<PlaylistManager::NextDreamDecision> PlaylistManager::preflightNext
 
         decision = {
             m_currentPosition,
-            TransitionType::StandardCrossfade,  // Fade from end to beginning
+            determineTransitionType(currentEntry, currentEntry),
             m_cacheManager.getDream(currentEntry.uuid),
             currentEntry.startKeyframe,
             currentEntry.endKeyframe
@@ -491,13 +492,14 @@ std::optional<PlaylistManager::NextDreamDecision> PlaylistManager::preflightNext
         std::mt19937 gen(rd());
         std::uniform_int_distribution<size_t> dist(0, m_playlist.size() - 1);
         size_t nextPos = dist(gen);
+        const auto& currentEntry = m_playlist[m_currentPosition];
         const auto& nextEntry = m_playlist[nextPos];
 
         g_Log->Info("Preflight : Shuffle mode - random position %zu", nextPos);
 
         decision = {
             nextPos,
-            TransitionType::StandardCrossfade,
+            determineTransitionType(currentEntry, nextEntry),
             m_cacheManager.getDream(nextEntry.uuid),
             nextEntry.startKeyframe,
             nextEntry.endKeyframe
