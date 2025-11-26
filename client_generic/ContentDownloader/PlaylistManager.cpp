@@ -772,8 +772,6 @@ const Cache::Dream* PlaylistManager::getCurrentDream() const {
         return nullptr;
     }
 
-    g_Log->Info("getCurrentDream : %s %s (pos: %zu)", m_playlist[m_currentPosition].uuid.c_str(), m_currentDreamUUID.c_str(), m_currentPosition);
-
     return m_currentDream;
 }
 
